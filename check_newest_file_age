@@ -246,7 +246,7 @@ OS_DISTRO=`uname -s`
 for dir in $dirs
 do
 	check_file=
-	let "DIR_COUNT += 1" > /dev/null
+  DIR_COUNT=$(($DIR_COUNT + 1))
 
 	# Check if dir exists.
 	full_path=${base_dir}${dir}
@@ -276,10 +276,10 @@ do
 					eval $(stat -s ${next_filepath})
 				fi
 
-				let "FILE_AGE = $CURRENT_TIME - $st_ctime" > /dev/null
-				let "FILE_AGE_UNITS = $FILE_AGE / $multiplier" > /dev/null
-				let "MAX_WARN_AGE = $warning * $multiplier" > /dev/null
-				let "MAX_CRIT_AGE = $critical * $multiplier" > /dev/null
+        FILE_AGE=$(($CURRENT_TIME - $st_ctime))
+        FILE_AGE_UNITS=$(($FILE_AGE / $multiplier))
+        MAX_WARN_AGE=$(($warning * $multiplier))
+        MAX_CRIT_AGE=$(($critical * $multiplier))
 				if [ $FILE_AGE -gt $MAX_CRIT_AGE ]; then
 					OUTPUT="$OUTPUT ${dir}: ${FILE_AGE_UNITS}${abbreviation}"
 					set_exit_status $STATE_CRITICAL
@@ -287,7 +287,7 @@ do
 					OUTPUT="$OUTPUT ${dir}: ${FILE_AGE_UNITS}${abbreviation}"
 					set_exit_status $STATE_WARNING
 				else
-					let "OK_FILE_COUNT += 1" > /dev/null
+          OK_FILE_COUNT=$(($OK_FILE_COUNT + 1))
 					if [ "$verbose" ]; then
 						OUTPUT="$OUTPUT ${dir}: ${FILE_AGE_UNITS}${abbreviation}"
 					fi
@@ -301,7 +301,7 @@ do
 			OUTPUT="$OUTPUT ${dir}: No files"
 			# If empty is an OK state, then increment the ok file count.
 			if [ "$on_empty" = "$STATE_OK" ]; then
-				let "OK_FILE_COUNT += 1" > /dev/null
+        OK_FILE_COUNT=$(($OK_FILE_COUNT + 1))
 			fi
 		fi
 	else
