@@ -32,7 +32,7 @@ The following arguments are accepted:
   -w              (Optional) Generate a warning message if the last created
                   file is older than this value.  Defaults to 26 hours.
 
-  -c	          (Optional) Generate a critical message if the last created
+  -c            (Optional) Generate a critical message if the last created
                   file is older than this value.  Defaults to 52 hours.
 
   -W              (Optional) If set, a warning message will be returned if the
@@ -91,22 +91,22 @@ print_help() {
 # Sets the exit status for the plugin.  This is done in such a way that the
 # status can only go in one direction: OK -> WARNING -> CRITICAL.
 set_exit_status() {
-	new_status=$1
-	# Nothing needs to be done if the state is already critical, so exclude
-	# that case.
-	case $exitstatus
-	in
-		$STATE_WARNING)
-			# Only upgrade from warning to critical.
-			if [ "$new_status" = "$STATE_CRITICAL" ]; then
-				exitstatus=$new_status;
-			fi
-		;;
-		$STATE_OK)
-			# Always update state if current state is OK.
-			exitstatus=$new_status;
-		;;
-	esac
+  new_status=$1
+  # Nothing needs to be done if the state is already critical, so exclude
+  # that case.
+  case $exitstatus
+  in
+    $STATE_WARNING)
+      # Only upgrade from warning to critical.
+      if [ "$new_status" = "$STATE_CRITICAL" ]; then
+        exitstatus=$new_status;
+      fi
+    ;;
+    $STATE_OK)
+      # Always update state if current state is OK.
+      exitstatus=$new_status;
+    ;;
+  esac
 }
 
 # Make sure the correct number of command line
@@ -153,26 +153,26 @@ while test -n "$1"; do
             critical=$2
             shift
             ;;
-		-W)
-			on_empty=$STATE_WARNING
+    -W)
+      on_empty=$STATE_WARNING
             ;;
-		-C)
-			on_empty=$STATE_CRITICAL
+    -C)
+      on_empty=$STATE_CRITICAL
             ;;
         -t)
             time_unit=$2
             shift
             ;;
-		-V)
-			verbose=1
+    -V)
+      verbose=1
             ;;
         --check-dirs)
             check_dirs=1
             ;;
-		--base-dir)
-        	base_dir=$2
-			shift
-			;;
+    --base-dir)
+          base_dir=$2
+      shift
+      ;;
         -x)
             exitstatus=$2
             shift
@@ -191,48 +191,48 @@ while test -n "$1"; do
 done
 
 if [ ! "$dirs" ]; then
-	echo "No directories provided."
-	exit $STATE_UNKNOWN
+  echo "No directories provided."
+  exit $STATE_UNKNOWN
 fi
 
 if [ `echo "$warning" | grep [^0-9]` ] || [ ! "$warning" ]; then
-	echo "Warning value must be a number."
-	exit $STATE_UNKNOWN
+  echo "Warning value must be a number."
+  exit $STATE_UNKNOWN
 fi
 
 if [ `echo "$critical" | grep [^0-9]` ] || [ ! "$critical" ]; then
-	echo "Critical value must be a number."
-	exit $STATE_UNKNOWN
+  echo "Critical value must be a number."
+  exit $STATE_UNKNOWN
 fi
 
 if [ ! `echo "$time_unit" | grep "seconds\|minutes\|hours\|days"` ]; then
-	echo "Time unit must be one of: seconds, minutes, hours, days."
-	exit $STATE_UNKNOWN
+  echo "Time unit must be one of: seconds, minutes, hours, days."
+  exit $STATE_UNKNOWN
 fi
 
 if [ "$warning" -ge "$critical" ]; then
-	echo "Critical time must be greater than warning time."
-	exit $STATE_UNKNOWN
+  echo "Critical time must be greater than warning time."
+  exit $STATE_UNKNOWN
 fi
 
 case $time_unit
 in
-	days)
-		multiplier=86400;
-		abbreviation="days";
-	;;
-	hours)
-		multiplier=3600;
-		abbreviation="hrs";
-	;;
-	minutes)
-		multiplier=60;
-		abbreviation="mins";
-	;;
-	*)
-		multiplier=1
-		abbreviation="secs";
-	;;
+  days)
+    multiplier=86400;
+    abbreviation="days";
+  ;;
+  hours)
+    multiplier=3600;
+    abbreviation="hrs";
+  ;;
+  minutes)
+    multiplier=60;
+    abbreviation="mins";
+  ;;
+  *)
+    multiplier=1
+    abbreviation="secs";
+  ;;
 esac
 
 # Starting values.
@@ -245,92 +245,92 @@ OS_DISTRO=`uname -s`
 # Loop through each provided directory.
 for dir in $dirs
 do
-	check_file=
+  check_file=
   DIR_COUNT=$(($DIR_COUNT + 1))
 
-	# Check if dir exists.
-	full_path=${base_dir}${dir}
-	if [ -d "$full_path" ]; then
-		file_list=`ls -t $full_path`
-		# Cycle through files, looking for a checkable file.
-		for next_file in $file_list
-		do
-			next_filepath=$full_path/$next_file
-			if [ "$check_dirs" ]; then
-				# Check if it's a file or directory.
-				if [ -f "$next_filepath" ] || [ -d "$next_filepath" ]; then
-					check_file=1
-				fi
-			else
-				# Check if it's a file.
-				if [ -f "$next_filepath" ]; then
-					check_file=1
-				fi
-			fi
-			if [ "$check_file" ]; then
-				# stat doesn't work the same on Linux and FreeBSD/Darwin, so
-				# make adjustments here.
-				if [ "$OS_DISTRO" = "Linux" ]; then
-					st_ctime=`stat --printf=%Y ${next_filepath}`
-				else
-					eval $(stat -s ${next_filepath})
-				fi
+  # Check if dir exists.
+  full_path=${base_dir}${dir}
+  if [ -d "$full_path" ]; then
+    file_list=`ls -t $full_path`
+    # Cycle through files, looking for a checkable file.
+    for next_file in $file_list
+    do
+      next_filepath=$full_path/$next_file
+      if [ "$check_dirs" ]; then
+        # Check if it's a file or directory.
+        if [ -f "$next_filepath" ] || [ -d "$next_filepath" ]; then
+          check_file=1
+        fi
+      else
+        # Check if it's a file.
+        if [ -f "$next_filepath" ]; then
+          check_file=1
+        fi
+      fi
+      if [ "$check_file" ]; then
+        # stat doesn't work the same on Linux and FreeBSD/Darwin, so
+        # make adjustments here.
+        if [ "$OS_DISTRO" = "Linux" ]; then
+          st_ctime=`stat --printf=%Y ${next_filepath}`
+        else
+          eval $(stat -s ${next_filepath})
+        fi
 
         FILE_AGE=$(($CURRENT_TIME - $st_ctime))
         FILE_AGE_UNITS=$(($FILE_AGE / $multiplier))
         MAX_WARN_AGE=$(($warning * $multiplier))
         MAX_CRIT_AGE=$(($critical * $multiplier))
-				if [ $FILE_AGE -gt $MAX_CRIT_AGE ]; then
-					OUTPUT="$OUTPUT ${dir}: ${FILE_AGE_UNITS}${abbreviation}"
-					set_exit_status $STATE_CRITICAL
-				elif [ $FILE_AGE -gt $MAX_WARN_AGE ]; then
-					OUTPUT="$OUTPUT ${dir}: ${FILE_AGE_UNITS}${abbreviation}"
-					set_exit_status $STATE_WARNING
-				else
+        if [ $FILE_AGE -gt $MAX_CRIT_AGE ]; then
+          OUTPUT="$OUTPUT ${dir}: ${FILE_AGE_UNITS}${abbreviation}"
+          set_exit_status $STATE_CRITICAL
+        elif [ $FILE_AGE -gt $MAX_WARN_AGE ]; then
+          OUTPUT="$OUTPUT ${dir}: ${FILE_AGE_UNITS}${abbreviation}"
+          set_exit_status $STATE_WARNING
+        else
           OK_FILE_COUNT=$(($OK_FILE_COUNT + 1))
-					if [ "$verbose" ]; then
-						OUTPUT="$OUTPUT ${dir}: ${FILE_AGE_UNITS}${abbreviation}"
-					fi
-				fi
-				break
-			fi
-		done
-		# Check here to see if any files got tested in the directory.
-		if [ ! "$check_file" ]; then
-			set_exit_status $on_empty
-			OUTPUT="$OUTPUT ${dir}: No files"
-			# If empty is an OK state, then increment the ok file count.
-			if [ "$on_empty" = "$STATE_OK" ]; then
+          if [ "$verbose" ]; then
+            OUTPUT="$OUTPUT ${dir}: ${FILE_AGE_UNITS}${abbreviation}"
+          fi
+        fi
+        break
+      fi
+    done
+    # Check here to see if any files got tested in the directory.
+    if [ ! "$check_file" ]; then
+      set_exit_status $on_empty
+      OUTPUT="$OUTPUT ${dir}: No files"
+      # If empty is an OK state, then increment the ok file count.
+      if [ "$on_empty" = "$STATE_OK" ]; then
         OK_FILE_COUNT=$(($OK_FILE_COUNT + 1))
-			fi
-		fi
-	else
-		set_exit_status $on_empty
-		OUTPUT="$OUTPUT ${dir}: Does not exist"
-	fi
+      fi
+    fi
+  else
+    set_exit_status $on_empty
+    OUTPUT="$OUTPUT ${dir}: Does not exist"
+  fi
 done
 
 case $exitstatus
 in
-	$STATE_CRITICAL)
-		exit_message="CRITICAL";
-	;;
-	$STATE_WARNING)
-		exit_message="WARNING";
-	;;
-	$STATE_OK)
-		exit_message="OK";
-	;;
-	*)
-		exitstatus=$STATE_UNKNOWN;
-		exit_message="UNKNOWN";
-	;;
+  $STATE_CRITICAL)
+    exit_message="CRITICAL";
+  ;;
+  $STATE_WARNING)
+    exit_message="WARNING";
+  ;;
+  $STATE_OK)
+    exit_message="OK";
+  ;;
+  *)
+    exitstatus=$STATE_UNKNOWN;
+    exit_message="UNKNOWN";
+  ;;
 esac
 
 exit_message="${exit_message}: ${OK_FILE_COUNT}/${DIR_COUNT}"
 
 if [ "$OUTPUT" ]; then
-	exit_message="${exit_message} --${OUTPUT}"
+  exit_message="${exit_message} --${OUTPUT}"
 fi
 
 echo "$exit_message"
