@@ -268,9 +268,9 @@ do
         fi
       fi
       if [ "$check_file" ]; then
-        # stat doesn't work the same on Linux and FreeBSD/Darwin, so
+        # stat doesn't work the same on Linux/Solaris vs. FreeBSD/Darwin, so
         # make adjustments here.
-        if [ "$OS_DISTRO" = "Linux" ]; then
+        if [ "$OS_DISTRO" = "Linux" ] || [ "$OS_DISTRO" = "SunOS" ]; then
           st_ctime=`stat --printf=%Y ${next_filepath}`
         else
           eval $(stat -s ${next_filepath})
