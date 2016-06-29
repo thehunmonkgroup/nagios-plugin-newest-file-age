@@ -304,6 +304,9 @@ do
         OK_FILE_COUNT=$(($OK_FILE_COUNT + 1))
       fi
     fi
+  elif [ -f "$full_path" ]; then
+    set_exit_status $STATE_UNKNOWN
+    OUTPUT="$OUTPUT ${dir}: Is a file (only directories are supported)"
   else
     set_exit_status $on_empty
     OUTPUT="$OUTPUT ${dir}: Does not exist"
