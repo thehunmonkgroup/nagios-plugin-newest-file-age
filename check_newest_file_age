@@ -154,25 +154,25 @@ while test -n "$1"; do
             shift
             ;;
         -W)
-          on_empty=$STATE_WARNING
-                ;;
+            on_empty=$STATE_WARNING
+            ;;
         -C)
-          on_empty=$STATE_CRITICAL
-                ;;
-            -t)
-                time_unit=$2
-                shift
-                ;;
+            on_empty=$STATE_CRITICAL
+            ;;
+        -t)
+            time_unit=$2
+            shift
+            ;;
         -V)
-          verbose=1
-                ;;
-            --check-dirs)
-                check_dirs=1
-                ;;
+            verbose=1
+            ;;
+        --check-dirs)
+            check_dirs=1
+            ;;
         --base-dir)
-              base_dir=$2
-          shift
-          ;;
+            base_dir=$2
+            shift
+            ;;
         -x)
             exitstatus=$2
             shift
