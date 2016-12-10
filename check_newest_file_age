@@ -10,7 +10,7 @@ PROGPATH=`dirname $0`
 
 print_usage() {
     echo "
-Usage: check_newest_file_age --dirs | -d <directories> [-w <max_age>] [-c <max_age>] [-W] [-C] [-t <time_unit>] [-V] [--check-dirs] [--base-dir <directory>]
+Usage: check_newest_file_age --dirs | -d <directories> [-f <file_pattern>] [-w <max_age>] [-c <max_age>] [-W] [-C] [-t <time_unit>] [-V] [--check-dirs] [--base-dir <directory>]
 Usage: check_newest_file_age --help | -h
 
 Description:
@@ -29,10 +29,13 @@ The following arguments are accepted:
                   directory will be checked for the newest created file in that
                   directory.
 
+  -f              (Optional) Filename pattern with wildcard ? * and [0-9][a-z]
+                  It's used for select specific files.  Defaults is '*'.
+
   -w              (Optional) Generate a warning message if the last created
                   file is older than this value.  Defaults to 26 hours.
 
-  -c            (Optional) Generate a critical message if the last created
+  -c              (Optional) Generate a critical message if the last created
                   file is older than this value.  Defaults to 52 hours.
 
   -W              (Optional) If set, a warning message will be returned if the
@@ -125,6 +128,7 @@ verbose=
 on_empty=$STATE_OK
 check_dirs=
 base_dir=
+f_pattern='*'
 
 # Grab the command line arguments.
 while test -n "$1"; do
@@ -179,6 +183,10 @@ while test -n "$1"; do
             ;;
         --exitstatus)
             exitstatus=$2
+            shift
+            ;;
+        -f)
+            f_pattern=$2
             shift
             ;;
         *)
@@ -251,7 +259,7 @@ do
   # Check if dir exists.
   full_path=${base_dir}${dir}
   if [ -d "$full_path" ]; then
-    file_list=`ls -t $full_path`
+    file_list=`(cd $full_path && ls -1t $f_pattern 2>/dev/null)`
     # Cycle through files, looking for a checkable file.
     for next_file in $file_list
     do
@@ -284,12 +292,12 @@ do
           OUTPUT="$OUTPUT ${dir}: ${FILE_AGE_UNITS}${abbreviation}"
           set_exit_status $STATE_CRITICAL
         elif [ $FILE_AGE -gt $MAX_WARN_AGE ]; then
-          OUTPUT="$OUTPUT ${dir}: ${FILE_AGE_UNITS}${abbreviation}"
+          OUTPUT="$OUTPUT ${dir}${f_pattern}: ${FILE_AGE_UNITS}${abbreviation}"
           set_exit_status $STATE_WARNING
         else
           OK_FILE_COUNT=$(($OK_FILE_COUNT + 1))
           if [ "$verbose" ]; then
-            OUTPUT="$OUTPUT ${dir}: ${FILE_AGE_UNITS}${abbreviation}"
+            OUTPUT="$OUTPUT ${dir}${f_pattern}: ${FILE_AGE_UNITS}${abbreviation}"
           fi
         fi
         break
@@ -335,5 +343,3 @@ fi
 
 echo "$exit_message"
 exit $exitstatus
-
-
