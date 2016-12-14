@@ -34,9 +34,11 @@ The following arguments are accepted:
 
   -w              (Optional) Generate a warning message if the last created
                   file is older than this value.  Defaults to 26 hours.
+                  To disable this treshold, set -w '-'
 
   -c              (Optional) Generate a critical message if the last created
                   file is older than this value.  Defaults to 52 hours.
+                  To disable this treshold, set -c '-'
 
   -W              (Optional) If set, a warning message will be returned if the
                   specified directory doesn't exist, or there are no checkable
@@ -123,12 +125,14 @@ fi
 exitstatus=$STATE_OK
 warning=26
 critical=52
-time_unit=hours
-verbose=
+time_unit='hours'
+st_ctime=0
+verbose=0
 on_empty=$STATE_OK
-check_dirs=
-base_dir=
-f_pattern='*'
+check_dirs=0
+base_dir=''
+f_pattern='*'              # Default : Search all files
+find_opts='-maxdepth 1'    # Default : Non-recursive search
 
 # Grab the command line arguments.
 while test -n "$1"; do
@@ -172,9 +176,11 @@ while test -n "$1"; do
             ;;
         --check-dirs)
             check_dirs=1
+            # We want a recursive search (clear default value)
+            find_opts=''
             ;;
         --base-dir)
-            base_dir=$2
+            base_dir="$2/"
             shift
             ;;
         -x)
@@ -186,7 +192,7 @@ while test -n "$1"; do
             shift
             ;;
         -f)
-            f_pattern=$2
+            f_pattern=${2}
             shift
             ;;
         *)
@@ -203,13 +209,13 @@ if [ ! "$dirs" ]; then
   exit $STATE_UNKNOWN
 fi
 
-if [ `echo "$warning" | grep [^0-9]` ] || [ ! "$warning" ]; then
-  echo "Warning value must be a number."
+if [ `echo "$warning" | grep [^0-9\-]` ] || [ ! "$warning" ]; then
+  echo "Warning value must be a number or dash (-)."
   exit $STATE_UNKNOWN
 fi
 
-if [ `echo "$critical" | grep [^0-9]` ] || [ ! "$critical" ]; then
-  echo "Critical value must be a number."
+if [ `echo "$critical" | grep [^0-9\-]` ] || [ ! "$critical" ]; then
+  echo "Critical value must be a number or dash (-)."
   exit $STATE_UNKNOWN
 fi
 
@@ -218,9 +224,11 @@ if [ ! `echo "$time_unit" | grep "seconds\|minutes\|hours\|days"` ]; then
   exit $STATE_UNKNOWN
 fi
 
-if [ "$warning" -ge "$critical" ]; then
-  echo "Critical time must be greater than warning time."
-  exit $STATE_UNKNOWN
+if [ ${critical} != "-" ] && [ ${warning} != "-" ]; then
+  if [ "$warning" -ge "$critical" ]; then
+    echo "Critical time must be greater than warning time."
+    exit $STATE_UNKNOWN
+  fi
 fi
 
 case $time_unit
@@ -250,68 +258,76 @@ OUTPUT=
 CURRENT_TIME=`date +%s`
 OS_DISTRO=`uname -s`
 
+# Convert threshold time in seconds
+if [ ${warning} != "-" ]; then
+  MAX_WARN_AGE=$(($warning * $multiplier))
+else
+  MAX_WARN_AGE=0     # To avoid arithmetic error
+fi
+
+if [ ${critical} != "-" ]; then
+  MAX_CRIT_AGE=$(($critical * $multiplier))
+else
+  MAX_CRIT_AGE=0     # To avoid arithmetic error
+fi
+
 # Loop through each provided directory.
 for dir in $dirs
 do
-  check_file=
   DIR_COUNT=$(($DIR_COUNT + 1))
 
   # Check if dir exists.
-  full_path=${base_dir}${dir}
+  full_path="${base_dir}${dir}"
   if [ -d "$full_path" ]; then
-    file_list=`(cd $full_path && ls -1t $f_pattern 2>/dev/null)`
-    # Cycle through files, looking for a checkable file.
-    for next_file in $file_list
-    do
-      next_filepath=$full_path/$next_file
-      if [ "$check_dirs" ]; then
-        # Check if it's a file or directory.
-        if [ -f "$next_filepath" ] || [ -d "$next_filepath" ]; then
-          check_file=1
-        fi
-      else
-        # Check if it's a file.
-        if [ -f "$next_filepath" ]; then
-          check_file=1
-        fi
-      fi
-      if [ "$check_file" ]; then
-        # stat doesn't work the same on Linux/Solaris vs. FreeBSD/Darwin, so
-        # make adjustments here.
-        if [ "$OS_DISTRO" = "Linux" ] || [ "$OS_DISTRO" = "SunOS" ]; then
-          st_ctime=`stat --printf=%Y ${next_filepath}`
-        else
-          eval $(stat -s ${next_filepath})
-        fi
+    # Find the most recent file in a directory
+    # find / stat doesn't work the same on Linux/Solaris vs. FreeBSD/Darwin, so make adjustments here.
+    if [ "$OS_DISTRO" = "Linux" ] || [ "$OS_DISTRO" = "SunOS" ]; then
+      # Linux / Oracle Solaris
+      file_list=`find ${full_path} ${find_opts} -type f -name "${f_pattern}" -printf '%T@ %p (%Tc)\n' | sort -rn | head -1`
+#echo $file_list
+      st_ctime=`echo ${file_list} | cut -d "." -f1`
+      filename=`echo ${file_list} | cut -d " " -f2-`
+    else
+      # FreeBSD/Darwin
+      file_list=`find ${full_path} ${find_opts} -type f -name "${f_pattern}" -print0 | xargs -0 stat -f "%m %N" | sort -rn | head -1`
+      st_ctime=`echo ${file_list} | cut -d "." -f1`
+      filename=`echo ${file_list} | cut -d " " -f2-`
+    fi
 
-        FILE_AGE=$(($CURRENT_TIME - $st_ctime))
-        FILE_AGE_UNITS=$(($FILE_AGE / $multiplier))
-        MAX_WARN_AGE=$(($warning * $multiplier))
-        MAX_CRIT_AGE=$(($critical * $multiplier))
-        if [ $FILE_AGE -gt $MAX_CRIT_AGE ]; then
-          OUTPUT="$OUTPUT ${dir}: ${FILE_AGE_UNITS}${abbreviation}"
-          set_exit_status $STATE_CRITICAL
-        elif [ $FILE_AGE -gt $MAX_WARN_AGE ]; then
-          OUTPUT="$OUTPUT ${dir}${f_pattern}: ${FILE_AGE_UNITS}${abbreviation}"
-          set_exit_status $STATE_WARNING
-        else
-          OK_FILE_COUNT=$(($OK_FILE_COUNT + 1))
-          if [ "$verbose" ]; then
-            OUTPUT="$OUTPUT ${dir}${f_pattern}: ${FILE_AGE_UNITS}${abbreviation}"
-          fi
-        fi
-        break
-      fi
-    done
     # Check here to see if any files got tested in the directory.
-    if [ ! "$check_file" ]; then
+    if [ "${file_list}" ]; then
+      # Case : Files found
+
+      # Force type into integer
+      st_ctime=`printf "%i" ${st_ctime}`
+
+      # Compare with treshold Warning / Critical
+      FILE_AGE=$(( $CURRENT_TIME - ${st_ctime} ))
+      FILE_AGE_UNITS=$(( $FILE_AGE / $multiplier ))
+
+      if  [ ${critical} != "-" ] && [ $FILE_AGE -gt $MAX_CRIT_AGE ]; then
+        OUTPUT="$OUTPUT ${dir}${f_pattern}: ${FILE_AGE_UNITS}${abbreviation}"
+        set_exit_status $STATE_CRITICAL
+      elif  [ ${warning} != "-" ] && [ $FILE_AGE -gt $MAX_WARN_AGE ]; then
+        OUTPUT="$OUTPUT ${dir}${f_pattern}: ${FILE_AGE_UNITS}${abbreviation}"
+        set_exit_status $STATE_WARNING
+      else
+        OK_FILE_COUNT=$(($OK_FILE_COUNT + 1))
+        if [ "$verbose" ]; then
+          OUTPUT="$OUTPUT ${dir}${f_pattern}: ${FILE_AGE_UNITS}${abbreviation}"
+        fi
+      fi
+    else
+      # Case : No files
+
       set_exit_status $on_empty
-      OUTPUT="$OUTPUT ${dir}: No files"
+      OUTPUT="$OUTPUT ${dir}${f_pattern}: No files"
       # If empty is an OK state, then increment the ok file count.
       if [ "$on_empty" = "$STATE_OK" ]; then
         OK_FILE_COUNT=$(($OK_FILE_COUNT + 1))
       fi
     fi
+
   else
     set_exit_status $on_empty
     OUTPUT="$OUTPUT ${dir}: Does not exist"
