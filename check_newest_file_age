@@ -49,6 +49,7 @@ The following arguments are accepted:
   -V              (Optional) Output verbose information about all checked
                   directories.  Default is only to print verbose information
                   for directories with non-OK states.
+  -k             (Optional) Comment to check
 
   --check-dirs    (Optional) If set, directories inside the specified directory
                   will also be checked for their creation time. Note that this
@@ -139,6 +140,10 @@ while test -n "$1"; do
             ;;
         --dirs)
             dirs=$2
+            shift
+            ;;
+         -k)
+            comment=$2
             shift
             ;;
         -d)
@@ -333,7 +338,7 @@ if [ "$OUTPUT" ]; then
   exit_message="${exit_message} --${OUTPUT}"
 fi
 
-echo "$exit_message"
+echo "$exit_message $comment"
 exit $exitstatus
 
 
