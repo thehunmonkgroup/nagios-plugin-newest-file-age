@@ -10,7 +10,7 @@ PROGPATH=`dirname $0`
 
 print_usage() {
     echo "
-Usage: check_newest_file_age --dirs | -d <directories> [-w <max_age>] [-c <max_age>] [-W] [-C] [-t <time_unit>] [-V] [--check-dirs] [--base-dir <directory>]
+Usage: check_newest_file_age --dirs | -d <directories> [-w <max_age>] [-c <max_age>] [-W] [-C] [-t <time_unit>] [-V] [--check-dirs] [--base-dir <directory>][--comment <comment>]
 Usage: check_newest_file_age --help | -h
 
 Description:
@@ -49,7 +49,7 @@ The following arguments are accepted:
   -V              (Optional) Output verbose information about all checked
                   directories.  Default is only to print verbose information
                   for directories with non-OK states.
-  -k             (Optional) Comment to check
+  --comment     (Optional) Comment to check
 
   --check-dirs    (Optional) If set, directories inside the specified directory
                   will also be checked for their creation time. Note that this
@@ -126,6 +126,7 @@ verbose=
 on_empty=$STATE_OK
 check_dirs=
 base_dir=
+comment=
 
 # Grab the command line arguments.
 while test -n "$1"; do
@@ -142,7 +143,7 @@ while test -n "$1"; do
             dirs=$2
             shift
             ;;
-         -k)
+         --comment)
             comment=$2
             shift
             ;;
