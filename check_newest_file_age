@@ -49,7 +49,7 @@ The following arguments are accepted:
   -V              (Optional) Output verbose information about all checked
                   directories.  Default is only to print verbose information
                   for directories with non-OK states.
-  --comment     (Optional) Comment to check
+  --comment     (Optional) Comment to append to plugin output
 
   --check-dirs    (Optional) If set, directories inside the specified directory
                   will also be checked for their creation time. Note that this
