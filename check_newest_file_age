@@ -32,7 +32,7 @@ The following arguments are accepted:
   -w              (Optional) Generate a warning message if the last created
                   file is older than this value.  Defaults to 26 hours.
 
-  -c            (Optional) Generate a critical message if the last created
+  -c              (Optional) Generate a critical message if the last created
                   file is older than this value.  Defaults to 52 hours.
 
   -W              (Optional) If set, a warning message will be returned if the
@@ -49,7 +49,7 @@ The following arguments are accepted:
   -V              (Optional) Output verbose information about all checked
                   directories.  Default is only to print verbose information
                   for directories with non-OK states.
-  --comment     (Optional) Comment to append to plugin output
+  --comment       (Optional) Comment to append to plugin output
 
   --check-dirs    (Optional) If set, directories inside the specified directory
                   will also be checked for their creation time. Note that this
