@@ -2,7 +2,7 @@
 #
 # Newest file in a directory plugin for Nagios.
 # Written by Chad Phillips (chad@apartmentlines.com)
-# Last Modified: 2016-04-21
+# Last Modified: 2020-04-16
 
 PROGPATH=`dirname $0`
 
@@ -247,7 +247,7 @@ OK_FILE_COUNT=0
 OUTPUT=
 CURRENT_TIME=`date +%s`
 OS_DISTRO=`uname -s`
-
+ALPINE_DISTRO="/etc/alpine-release"
 # Loop through each provided directory.
 for dir in $dirs
 do
@@ -277,7 +277,11 @@ do
         # stat doesn't work the same on Linux/Solaris vs. FreeBSD/Darwin, so
         # make adjustments here.
         if [ "$OS_DISTRO" = "Linux" ] || [ "$OS_DISTRO" = "SunOS" ]; then
-          st_ctime=`stat --printf=%Y ${next_filepath}`
+          if [ -f $ALPINE_DISTRO ]; then
+            st_ctime=`stat -c %Y ${next_filepath}`
+          else
+            st_ctime=`stat --printf=%Y ${next_filepath}`
+          fi
         else
           eval $(stat -s ${next_filepath})
         fi
