@@ -4,13 +4,21 @@ This plugin pulls the most recently created file in each specified directory, an
 
 This is useful for examining backup directories for freshness.
 
-Tested to work on Linux/FreeBSD/OS X.
+Tested to work on
+- Linux
+    - GNU stat needed.
+- FreeBSD
+- OS X.
 
 ## Usage ##
 
 Run the plugin with the --help argument for a full description of all arguments, example usage, and caveats.
 
 The included utils.sh script is required for this plugin to run properly, and must be placed in the same directory as the plugin. On RHEL/CentOS systems, it is provided by the ```nagios-plugins``` package, and is provided here for other use cases.
+
+### Alpine Linux support ###
+
+Alpine Linux by default uses Busybox stat. Install `apk add coreutils` package to install GNU stat.
 
 ## Support
 
