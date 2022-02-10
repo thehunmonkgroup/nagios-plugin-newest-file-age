@@ -257,50 +257,54 @@ do
   # Check if dir exists.
   full_path=${base_dir}${dir}
   if [ -d "$full_path" ]; then
-    file_list=`ls -t $full_path`
-    # Cycle through files, looking for a checkable file.
-    for next_file in $file_list
-    do
-      next_filepath=$full_path/$next_file
-      if [ "$check_dirs" ]; then
-        # Check if it's a file or directory.
-        if [ -f "$next_filepath" ] || [ -d "$next_filepath" ]; then
-          check_file=1
-        fi
-      else
-        # Check if it's a file.
-        if [ -f "$next_filepath" ]; then
-          check_file=1
-        fi
-      fi
-      if [ "$check_file" ]; then
-        # stat doesn't work the same on Linux/Solaris vs. FreeBSD/Darwin, so
-        # make adjustments here.
-        if [ "$OS_DISTRO" = "Linux" ] || [ "$OS_DISTRO" = "SunOS" ]; then
-          st_ctime=`stat --printf=%Y ${next_filepath}`
+    if file_list=`ls -t $full_path`; then
+      # Cycle through files, looking for a checkable file.
+      for next_file in $file_list
+      do
+        next_filepath=$full_path/$next_file
+        if [ "$check_dirs" ]; then
+          # Check if it's a file or directory.
+          if [ -f "$next_filepath" ] || [ -d "$next_filepath" ]; then
+            check_file=1
+          fi
         else
-          eval $(stat -s ${next_filepath})
-        fi
-
-        FILE_AGE=$(($CURRENT_TIME - $st_ctime))
-        FILE_AGE_UNITS=$(($FILE_AGE / $multiplier))
-        MAX_WARN_AGE=$(($warning * $multiplier))
-        MAX_CRIT_AGE=$(($critical * $multiplier))
-        if [ $FILE_AGE -gt $MAX_CRIT_AGE ]; then
-          OUTPUT="$OUTPUT ${dir}: ${FILE_AGE_UNITS}${abbreviation}"
-          set_exit_status $STATE_CRITICAL
-        elif [ $FILE_AGE -gt $MAX_WARN_AGE ]; then
-          OUTPUT="$OUTPUT ${dir}: ${FILE_AGE_UNITS}${abbreviation}"
-          set_exit_status $STATE_WARNING
-        else
-          OK_FILE_COUNT=$(($OK_FILE_COUNT + 1))
-          if [ "$verbose" ]; then
-            OUTPUT="$OUTPUT ${dir}: ${FILE_AGE_UNITS}${abbreviation}"
+          # Check if it's a file.
+          if [ -f "$next_filepath" ]; then
+            check_file=1
           fi
         fi
-        break
-      fi
-    done
+        if [ "$check_file" ]; then
+          # stat doesn't work the same on Linux/Solaris vs. FreeBSD/Darwin, so
+          # make adjustments here.
+          if [ "$OS_DISTRO" = "Linux" ] || [ "$OS_DISTRO" = "SunOS" ]; then
+            st_ctime=`stat --printf=%Y ${next_filepath}`
+          else
+            eval $(stat -s ${next_filepath})
+          fi
+      
+          FILE_AGE=$(($CURRENT_TIME - $st_ctime))
+          FILE_AGE_UNITS=$(($FILE_AGE / $multiplier))
+          MAX_WARN_AGE=$(($warning * $multiplier))
+          MAX_CRIT_AGE=$(($critical * $multiplier))
+          if [ $FILE_AGE -gt $MAX_CRIT_AGE ]; then
+            OUTPUT="$OUTPUT ${dir}: ${FILE_AGE_UNITS}${abbreviation}"
+            set_exit_status $STATE_CRITICAL
+          elif [ $FILE_AGE -gt $MAX_WARN_AGE ]; then
+            OUTPUT="$OUTPUT ${dir}: ${FILE_AGE_UNITS}${abbreviation}"
+            set_exit_status $STATE_WARNING
+          else
+            OK_FILE_COUNT=$(($OK_FILE_COUNT + 1))
+            if [ "$verbose" ]; then
+              OUTPUT="$OUTPUT ${dir}: ${FILE_AGE_UNITS}${abbreviation}"
+            fi
+          fi
+          break
+        fi
+      done
+		else
+      set_exit_status $STATE_UNKNOWN
+      OUTPUT="$OUTPUT ${dir}: ls command failed"
+		fi
     # Check here to see if any files got tested in the directory.
     if [ ! "$check_file" ]; then
       set_exit_status $on_empty
