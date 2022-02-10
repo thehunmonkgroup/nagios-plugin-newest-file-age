@@ -301,10 +301,10 @@ do
           break
         fi
       done
-		else
+    else
       set_exit_status $STATE_UNKNOWN
       OUTPUT="$OUTPUT ${dir}: ls command failed"
-		fi
+    fi
     # Check here to see if any files got tested in the directory.
     if [ ! "$check_file" ]; then
       set_exit_status $on_empty
