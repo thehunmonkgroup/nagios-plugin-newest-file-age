@@ -260,6 +260,7 @@ do
     file_list=`ls -t $full_path 2> /dev/null`
     if [ $? -eq 0 ]; then
       # Cycle through files, looking for a checkable file.
+      IFS=$'\n'
       for next_file in $file_list
       do
         next_filepath=$full_path/$next_file
