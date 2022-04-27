@@ -260,8 +260,7 @@ do
     file_list=`ls -t $full_path 2> /dev/null`
     if [ $? -eq 0 ]; then
       # Cycle through files, looking for a checkable file.
-      IFS=$'\n'
-      for next_file in $file_list
+      while IFS= read -r next_file
       do
         next_filepath=$full_path/$next_file
         if [ "$check_dirs" ]; then
@@ -301,7 +300,9 @@ do
           fi
           break
         fi
-      done
+      done <<EOF
+$file_list
+EOF
       # Check here to see if any files got tested in the directory.
       if [ ! "$check_file" ]; then
         set_exit_status $on_empty
