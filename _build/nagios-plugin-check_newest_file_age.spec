@@ -9,7 +9,7 @@ Summary:        Checks newest file in directory
 License:        MIT License
 Group:          System/Monitoring
 Url:            https://github.com/joernott/nagios-plugin-newest-file-age
-Source0:        nagios-plugin-newest-file-age-%{version}.tar.gz
+Source0:        nagios-plugin-check_newest_file_age-%{version}.tar.gz
 Requires:       nagios-plugins
 BuildArch:      noarch
 Provides:       check_newest_file_age
