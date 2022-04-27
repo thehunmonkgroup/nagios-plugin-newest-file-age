@@ -316,6 +316,9 @@ EOF
       set_exit_status $STATE_UNKNOWN
       OUTPUT="$OUTPUT ${dir}: ls command failed"
     fi
+  elif [ -f "$full_path" ]; then
+    set_exit_status $STATE_UNKNOWN
+    OUTPUT="$OUTPUT ${dir}: Is a file (only directories are supported)"
   else
     set_exit_status $on_empty
     OUTPUT="$OUTPUT ${dir}: Does not exist"
